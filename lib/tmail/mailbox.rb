@@ -463,9 +463,13 @@ module TMail
       old = Time.now.to_i - TOO_OLD
       
       each_filename(@tmp) do |full, fname|
-        if FileTest.file? full and
-           File.stat(full).mtime.to_i < old
-          File.unlink full
+        begin
+          if FileTest.file? full and
+             File.stat(full).mtime.to_i < old
+            File.unlink full
+          end
+        rescue Errno::ENOENT
+          # ignore exceptions from files removed during iteration
         end
       end
     end
