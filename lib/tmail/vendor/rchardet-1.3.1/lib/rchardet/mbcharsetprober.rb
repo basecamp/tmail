@@ -1,14 +1,16 @@
 ######################## BEGIN LICENSE BLOCK ########################
-# The Original Code is mozilla.org code.
+# The Original Code is Mozilla Universal charset detector code.
 #
 # The Initial Developer of the Original Code is
 # Netscape Communications Corporation.
-# Portions created by the Initial Developer are Copyright (C) 1998
+# Portions created by the Initial Developer are Copyright (C) 2001
 # the Initial Developer. All Rights Reserved.
 #
 # Contributor(s):
 #   Jeff Hodges - port to Ruby
 #   Mark Pilgrim - port to Python
+#   Shy Shalom - original C code
+#   Proofpoint, Inc.
 #
 # This library is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -27,61 +29,61 @@
 ######################### END LICENSE BLOCK #########################
 
 module CharDet
-  ONE_CHAR_PROB = 0.5
-
-  class UTF8Prober < CharSetProber
+  class MultiByteCharSetProber < CharSetProber
     def initialize
-      super()
-      @_mCodingSM = CodingStateMachine.new(UTF8SMModel)
-      reset()
+      super
+      @_mDistributionAnalyzer = nil
+      @_mCodingSM = nil
+      @_mLastChar = "\x00\x00"
     end
 
     def reset
-      super()
-      @_mCodingSM.reset()
-      @_mNumOfMBChar = 0
+      super
+      if @_mCodingSM
+	@_mCodingSM.reset()
+      end
+      if @_mDistributionAnalyzer
+	@_mDistributionAnalyzer.reset()
+      end
+      @_mLastChar = "\x00\x00"
     end
 
     def get_charset_name
-      return "utf-8"
     end
 
     def feed(aBuf)
-      aBuf.each_byte do |b|
-        c = b.chr
-        codingState = @_mCodingSM.next_state(c)
-        if codingState == EError
-          @_mState = ENotMe
-          break
-        elsif codingState == EItsMe
-          @_mState = EFoundIt
-          break
-        elsif codingState == EStart
-          if @_mCodingSM.get_current_charlen() >= 2
-            @_mNumOfMBChar += 1
-          end
-        end
+      aLen = aBuf.length
+      for i in (0...aLen)
+	codingState = @_mCodingSM.next_state(aBuf[i..i])
+	if codingState == EError
+	  $stderr << "#{get_charset_name} prober hit error at byte #{i}\n" if $debug
+	  @_mState = ENotMe
+	  break
+	elsif codingState == EItsMe
+	  @_mState = EFoundIt
+	  break
+	elsif codingState == EStart
+	  charLen = @_mCodingSM.get_current_charlen()
+	  if i == 0
+	    @_mLastChar[1] = aBuf[0..0]
+	    @_mDistributionAnalyzer.feed(@_mLastChar, charLen)
+	  else
+	    @_mDistributionAnalyzer.feed(aBuf[i-1...i+1], charLen)
+	  end
+	end
       end
+      @_mLastChar[0] = aBuf[aLen-1..aLen-1]
 
       if get_state() == EDetecting
-        if get_confidence() > SHORTCUT_THRESHOLD
-          @_mState = EFoundIt
-        end
+	if @_mDistributionAnalyzer.got_enough_data() and (get_confidence() > SHORTCUT_THRESHOLD)
+	  @_mState = EFoundIt
+	end
       end
-
       return get_state()
     end
 
     def get_confidence
-      unlike = 0.99
-      if @_mNumOfMBChar < 6
-        for i in (0...@_mNumOfMBChar)
-          unlike = unlike * ONE_CHAR_PROB
-        end
-        return 1.0 - unlike
-      else
-        return unlike
-      end
+      return @_mDistributionAnalyzer.get_confidence()
     end
   end
 end

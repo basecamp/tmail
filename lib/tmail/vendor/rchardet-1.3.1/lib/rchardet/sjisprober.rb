@@ -27,63 +27,62 @@
 ######################### END LICENSE BLOCK #########################
 
 module CharDet
-  class EscCharSetProber < CharSetProber
+  class SJISProber < MultiByteCharSetProber
     def initialize
       super()
-      @_mCodingSM = [ CodingStateMachine.new(HZSMModel),
-                      CodingStateMachine.new(ISO2022CNSMModel),
-                      CodingStateMachine.new(ISO2022JPSMModel),
-                      CodingStateMachine.new(ISO2022KRSMModel)  ]
+      @_mCodingSM = CodingStateMachine.new(SJISSMModel)
+      @_mDistributionAnalyzer = SJISDistributionAnalysis.new()
+      @_mContextAnalyzer = SJISContextAnalysis.new()
       reset()
     end
 
     def reset
       super()
-      for codingSM in @_mCodingSM
-        next if not codingSM
-        codingSM.active = true
-        codingSM.reset()
-      end
-      @_mActiveSM = @_mCodingSM.length
-      @_mDetectedCharset = nil
+      @_mContextAnalyzer.reset()
     end
 
     def get_charset_name
-      return @_mDetectedCharset
-    end
-
-    def get_confidence
-      if @_mDetectedCharset
-        return 0.99
-      else
-        return 0.00
-      end
+      return "SHIFT_JIS"
     end
 
     def feed(aBuf)
-      aBuf.each_byte do |b|
-        c = b.chr
-        for codingSM in @_mCodingSM
-          next unless codingSM
-          next unless codingSM.active
-          codingState = codingSM.next_state(c)
-          if codingState == EError
-            codingSM.active = false
-            @_mActiveSM -= 1
-            if @_mActiveSM <= 0
-              @_mState = ENotMe
-              return get_state()
-            end
-          elsif codingState == EItsMe
-            @_mState = EFoundIt
-            @_mDetectedCharset = codingSM.get_coding_state_machine()
-            return get_state()
-          end
-        end
+      aLen = aBuf.length
+      for i in (0...aLen)
+	codingState = @_mCodingSM.next_state(aBuf[i..i])
+	if codingState == EError
+	  $stderr << "#{get_charset_name} prober hit error at byte #{i}\n" if $debug
+	  @_mState = ENotMe
+	  break
+	elsif codingState == EItsMe
+	  @_mState = EFoundIt
+	  break
+	elsif codingState == EStart
+	  charLen = @_mCodingSM.get_current_charlen()
+	  if i == 0
+	    @_mLastChar[1] = aBuf[0..0]
+	    @_mContextAnalyzer.feed(@_mLastChar[2 - charLen..-1], charLen)
+	    @_mDistributionAnalyzer.feed(@_mLastChar, charLen)
+	  else
+	    @_mContextAnalyzer.feed(aBuf[i + 1 - charLen ... i + 3 - charLen], charLen)
+	    @_mDistributionAnalyzer.feed(aBuf[i - 1 ... i + 1], charLen)
+	  end
+	end
       end
-      return get_state()
 
+      @_mLastChar[0] = aBuf[aLen - 1.. aLen-1]
+
+      if get_state() == EDetecting
+	if @_mContextAnalyzer.got_enough_data() and (get_confidence() > SHORTCUT_THRESHOLD)
+	  @_mState = EFoundIt
+	end
+      end
+
+      return get_state()
     end
 
+    def get_confidence
+      l = [@_mContextAnalyzer.get_confidence(), @_mDistributionAnalyzer.get_confidence()]
+      return l.max
+    end
   end
 end

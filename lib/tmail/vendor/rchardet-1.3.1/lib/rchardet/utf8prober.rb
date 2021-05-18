@@ -27,62 +27,61 @@
 ######################### END LICENSE BLOCK #########################
 
 module CharDet
-  class SJISProber < MultiByteCharSetProber
+  ONE_CHAR_PROB = 0.5
+
+  class UTF8Prober < CharSetProber
     def initialize
       super()
-      @_mCodingSM = CodingStateMachine.new(SJISSMModel)
-      @_mDistributionAnalyzer = SJISDistributionAnalysis.new()
-      @_mContextAnalyzer = SJISContextAnalysis.new()
+      @_mCodingSM = CodingStateMachine.new(UTF8SMModel)
       reset()
     end
 
     def reset
       super()
-      @_mContextAnalyzer.reset()
+      @_mCodingSM.reset()
+      @_mNumOfMBChar = 0
     end
 
     def get_charset_name
-      return "SHIFT_JIS"
+      return "utf-8"
     end
 
     def feed(aBuf)
-      aLen = aBuf.length
-      for i in (0...aLen)
-        codingState = @_mCodingSM.next_state(aBuf[i..i])
-        if codingState == EError
-          $stderr << "#{get_charset_name} prober hit error at byte #{i}\n" if $debug
-          @_mState = ENotMe
-          break
-        elsif codingState == EItsMe
-          @_mState = EFoundIt
-          break
-        elsif codingState == EStart
-          charLen = @_mCodingSM.get_current_charlen()
-          if i == 0
-            @_mLastChar[1] = aBuf[0..0]
-            @_mContextAnalyzer.feed(@_mLastChar[2 - charLen..-1], charLen)
-            @_mDistributionAnalyzer.feed(@_mLastChar, charLen)
-          else
-            @_mContextAnalyzer.feed(aBuf[i + 1 - charLen ... i + 3 - charLen], charLen)
-            @_mDistributionAnalyzer.feed(aBuf[i - 1 ... i + 1], charLen)
-          end
-        end
+      aBuf.each_byte do |b|
+	c = b.chr
+	codingState = @_mCodingSM.next_state(c)
+	if codingState == EError
+	  @_mState = ENotMe
+	  break
+	elsif codingState == EItsMe
+	  @_mState = EFoundIt
+	  break
+	elsif codingState == EStart
+	  if @_mCodingSM.get_current_charlen() >= 2
+	    @_mNumOfMBChar += 1
+	  end
+	end
       end
 
-      @_mLastChar[0] = aBuf[aLen - 1.. aLen-1]
-
       if get_state() == EDetecting
-        if @_mContextAnalyzer.got_enough_data() and (get_confidence() > SHORTCUT_THRESHOLD)
-          @_mState = EFoundIt
-        end
+	if get_confidence() > SHORTCUT_THRESHOLD
+	  @_mState = EFoundIt
+	end
       end
 
       return get_state()
     end
 
     def get_confidence
-      l = [@_mContextAnalyzer.get_confidence(), @_mDistributionAnalyzer.get_confidence()]
-      return l.max
+      unlike = 0.99
+      if @_mNumOfMBChar < 6
+	for i in (0...@_mNumOfMBChar)
+	  unlike = unlike * ONE_CHAR_PROB
+	end
+	return 1.0 - unlike
+      else
+	return unlike
+      end
     end
   end
 end

@@ -27,38 +27,64 @@
 ######################### END LICENSE BLOCK #########################
 
 module CharDet
-  class CodingStateMachine
-    def initialize(sm)
-      @_mModel = sm
-      @_mCurrentBytePos = 0
-      @_mCurrentCharLen = 0
+  class EscCharSetProber < CharSetProber
+    def initialize
+      super()
+      @_mCodingSM = [ 
+	CodingStateMachine.new(HZSMModel),
+	CodingStateMachine.new(ISO2022CNSMModel),
+	CodingStateMachine.new(ISO2022JPSMModel),
+	CodingStateMachine.new(ISO2022KRSMModel)
+      ]
       reset()
     end
 
     def reset
-      @_mCurrentState = EStart
-    end
-
-    def next_state(c)
-      # for each byte we get its class
-      # if it is first byte, we also get byte length
-      byteCls = @_mModel['classTable'][c[0]]
-      if @_mCurrentState == EStart
-        @_mCurrentBytePos = 0
-        @_mCurrentCharLen = @_mModel['charLenTable'][byteCls]
+      super()
+      for codingSM in @_mCodingSM
+	next if not codingSM
+	codingSM.active = true
+	codingSM.reset()
       end
-      # from byte's class and stateTable, we get its next state
-      @_mCurrentState = @_mModel['stateTable'][@_mCurrentState * @_mModel['classFactor'] + byteCls]
-      @_mCurrentBytePos += 1
-      return @_mCurrentState
+      @_mActiveSM = @_mCodingSM.length
+      @_mDetectedCharset = nil
     end
 
-    def get_current_charlen
-      return @_mCurrentCharLen
+    def get_charset_name
+      return @_mDetectedCharset
     end
 
-    def get_coding_state_machine
-      return @_mModel['name']
+    def get_confidence
+      if @_mDetectedCharset
+	return 0.99
+      else
+	return 0.00
+      end
+    end
+
+    def feed(aBuf)
+      aBuf.each_byte do |b|
+	c = b.chr
+	for codingSM in @_mCodingSM
+	  next unless codingSM
+	  next unless codingSM.active
+	  codingState = codingSM.next_state(c)
+	  if codingState == EError
+	    codingSM.active = false
+	    @_mActiveSM -= 1
+	    if @_mActiveSM <= 0
+	      @_mState = ENotMe
+	      return get_state()
+	    end
+	  elsif codingState == EItsMe
+	    @_mState = EFoundIt
+	    @_mDetectedCharset = codingSM.get_coding_state_machine()
+	    return get_state()
+	  end
+	end
+      end
+
+      return get_state()
     end
   end
 end

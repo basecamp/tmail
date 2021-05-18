@@ -34,7 +34,7 @@ module CharDet
   MINIMUM_DATA_THRESHOLD = 4
 
   # This is hiragana 2-char sequence table, the number in each cell represents its frequency category
-  jp2CharContext = [
+  JP2_CHAR_CONTEXT = [
     [0,0,0,2,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,1,0,0,0,0,0,0,0,0,0,0,1],
     [2,4,0,4,0,3,0,4,0,3,4,4,4,2,4,3,3,4,3,2,3,3,4,2,3,3,3,2,4,1,4,3,3,1,5,4,3,4,3,4,3,5,3,0,3,5,4,2,0,3,1,0,3,3,0,3,3,0,1,1,0,4,3,0,3,3,0,4,0,2,0,3,5,5,5,5,4,0,4,1,0,3,4],
     [0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,2],
@@ -144,22 +144,22 @@ module CharDet
       # this character will simply our logic and improve performance.
       i = @_mNeedToSkipCharNum
       while i < aLen
-        order, charLen = get_order(aBuf[i...i+2])
-        i += charLen
-        if i > aLen
-          @_mNeedToSkipCharNum = i - aLen
-          @_mLastCharOrder = -1
-        else
-          if (order != -1) and (@_mLastCharOrder != -1)
-            @_mTotalRel += 1
-            if @_mTotalRel > MAX_REL_THRESHOLD
-              @_mDone = true
-              break
-            end
-            @_mRelSample[jp2CharContext[@_mLastCharOrder][order]] += 1
-          end
-          @_mLastCharOrder = order
-        end
+	order, charLen = get_order(aBuf[i...i+2])
+	i += charLen
+	if i > aLen
+	  @_mNeedToSkipCharNum = i - aLen
+	  @_mLastCharOrder = -1
+	else
+	  if (order != -1) and (@_mLastCharOrder != -1)
+	    @_mTotalRel += 1
+	    if @_mTotalRel > MAX_REL_THRESHOLD
+	      @_mDone = true
+	      break
+	    end
+	    @_mRelSample[JP2_CHAR_CONTEXT[@_mLastCharOrder][order]] += 1
+	  end
+	  @_mLastCharOrder = order
+	end
       end
     end
 
@@ -170,9 +170,9 @@ module CharDet
     def get_confidence
       # This is just one way to calculate confidence. It works well for me.
       if @_mTotalRel > MINIMUM_DATA_THRESHOLD
-        return (@_mTotalRel - @_mRelSample[0]) / @_mTotalRel
+	return (@_mTotalRel - @_mRelSample[0]) / @_mTotalRel
       else
-        return DONT_KNOW
+	return DONT_KNOW
       end
     end
 
@@ -188,15 +188,15 @@ module CharDet
       # find out current char's byte length
       aStr = aStr[0..1].join if aStr.class == Array
       if ((aStr[0..0] >= "\x81") and (aStr[0..0] <= "\x9F")) or ((aStr[0..0] >= "\xE0") and (aStr[0..0] <= "\xFC"))
-        charLen = 2
+	charLen = 2
       else
-        charLen = 1
+	charLen = 1
       end
       # return its order if it is hiragana
       if aStr.length > 1
-        if (aStr[0..0] == "\202") and (aStr[1..1] >= "\x9F") and (aStr[1..1] <= "\xF1")
-          return aStr[1] - 0x9F, charLen
-        end
+	if (aStr[0..0] == "\202") and (aStr[1..1] >= "\x9F") and (aStr[1..1] <= "\xF1")
+	  return aStr[1] - 0x9F, charLen
+	end
       end
     
       return -1, charLen
@@ -209,18 +209,18 @@ module CharDet
       # find out current char's byte length
       aStr = aStr[0..1].join if aStr.class == Array
       if (aStr[0..0] == "\x8E") or ((aStr[0..0] >= "\xA1") and (aStr[0..0] <= "\xFE"))
-        charLen = 2
+	charLen = 2
       elsif aStr[0..0] == "\x8F"
-        charLen = 3
+	charLen = 3
       else
-        charLen = 1
+	charLen = 1
       end
 
       # return its order if it is hiragana
       if aStr.length > 1
-        if (aStr[0..0] == "\xA4") and (aStr[1..1] >= "\xA1") and (aStr[1..1] <= "\xF3")
-          return aStr[1] - 0xA1, charLen
-        end
+	if (aStr[0..0] == "\xA4") and (aStr[1..1] >= "\xA1") and (aStr[1..1] <= "\xF3")
+	  return aStr[1] - 0xA1, charLen
+	end
       end
 
       return -1, charLen
