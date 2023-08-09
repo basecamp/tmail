@@ -1,3 +1,5 @@
+# encoding: ascii-8bit
+
 # Add in the local library for the load path so we get that before any possible
 # gem that is already installed.
 require 'stringio'

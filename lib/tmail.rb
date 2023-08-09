@@ -1,3 +1,5 @@
+# encoding: ascii-8bit
+
 require 'tmail/version'
 require 'tmail/mail'
 require 'tmail/mailbox'

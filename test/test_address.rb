@@ -1,3 +1,5 @@
+# encoding: ascii-8bit
+
 $:.unshift File.dirname(__FILE__)
 require 'test_helper'
 require 'tmail/address'

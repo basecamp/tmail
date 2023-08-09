@@ -1,3 +1,5 @@
+# encoding: ascii-8bit
+
 #--
 #   Copyright (c) 1998-2003 Minero Aoki <aamine@loveruby.net>
 #

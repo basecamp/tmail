@@ -1,3 +1,5 @@
+# encoding: ascii-8bit
+
 module Test
   module Unit
     class TestCase

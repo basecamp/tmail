@@ -1,3 +1,5 @@
+# encoding: ascii-8bit
+
 #:stopdoc:
 unless Enumerable.method_defined?(:map) 
   module Enumerable #:nodoc:

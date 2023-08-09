@@ -1,3 +1,5 @@
+# encoding: ascii-8bit
+
 #:stopdoc:
 # This is here for Rolls. 
 # Rolls uses this instead of lib/tmail.rb.

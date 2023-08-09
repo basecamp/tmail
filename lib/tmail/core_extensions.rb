@@ -1,3 +1,5 @@
+# encoding: ascii-8bit
+
 #:stopdoc:
 unless Object.respond_to?(:blank?)
   class Object

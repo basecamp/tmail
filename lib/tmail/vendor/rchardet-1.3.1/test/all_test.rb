@@ -1,3 +1,5 @@
+# encoding: ascii-8bit
+
 require 'test/unit'
 require File.dirname( __FILE__ ) + '/../lib/rchardet'
 

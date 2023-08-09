@@ -1,3 +1,5 @@
+# encoding: ascii-8bit
+
 ######################## BEGIN LICENSE BLOCK ########################
 # The Original Code is mozilla.org code.
 #

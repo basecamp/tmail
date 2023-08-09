@@ -1,3 +1,5 @@
+# encoding: ascii-8bit
+
 #:stopdoc:
 require 'tmail/version'
 require 'tmail/mail'

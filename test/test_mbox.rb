@@ -1,3 +1,5 @@
+# encoding: ascii-8bit
+
 require 'test_helper'
 require 'tmail/mailbox'
 require 'fileutils'

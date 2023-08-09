@@ -1,3 +1,5 @@
+# encoding: ascii-8bit
+
 =begin rdoc
 
 = Scanner for TMail

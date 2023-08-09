@@ -1,3 +1,5 @@
+# encoding: ascii-8bit
+
 # encoding: utf-8
 =begin rdoc
 
