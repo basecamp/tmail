@@ -91,7 +91,9 @@ class TestEncode < Test::Unit::TestCase
     mail = load_fixture('marked_as_utf_8_but_it_is_iso_8859_1.txt')
     
     name = mail.to_addrs.first.name
-    assert_equal ' Nicolas Fouché', TMail::Unquoter.unquote_and_convert_to(name, 'utf-8')
+    b = ' Nicolas Fouché'
+    b.force_encoding("utf-8") if b.respond_to?(:force_encoding)
+    assert_equal b, TMail::Unquoter.unquote_and_convert_to(name, 'utf-8')
 
     # Without the patch, TMail raises:
     #  Iconv::InvalidCharacter: "\351"

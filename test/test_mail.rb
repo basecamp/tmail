@@ -431,7 +431,9 @@ eW91IGFyZSAgTWFudWZhY3R1cmVyIG9mICBwbHN0aWMgIEJvdHRsZXMNCkFk
 ZKO6IGJsYWggQ2hpbmE=
 EOF
     mail = TMail::Mail.parse(msg)
-    assert_equal "Dear Sirs, \r\nWe are given to understand that you are  Manufacturer of  plstic  Bottles\r\nAdd： blah China", mail.body.strip
+    b = "Dear Sirs, \r\nWe are given to understand that you are  Manufacturer of  plstic  Bottles\r\nAdd： blah China"
+    b.force_encoding("utf-8") if b.respond_to? :force_encoding
+    assert_equal b, mail.body.strip
   end
 
   def test_message_id

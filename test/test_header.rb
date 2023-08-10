@@ -63,7 +63,7 @@ class DateTimeHeaderTester < Test::Unit::TestCase
 
   def test_to_s
     h = TMail::HeaderField.new('Date', 'Tue, 4 Dec 2001 10:49:32 +0900')
-    time = Time.parse('Tue, 4 Dec 2001 10:49:32 +0900').strftime("%a,%e %b %Y %H:%M:%S %z")
+    time = Time.parse('Tue, 4 Dec 2001 10:49:32 +0900').localtime.strftime("%a,%e %b %Y %H:%M:%S %z")
     assert_equal time, h.to_s
     assert_equal h.to_s, h.decoded
     ok = h.to_s
