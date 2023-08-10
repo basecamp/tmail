@@ -22,6 +22,8 @@ Gem::Specification.new do |s|
   s.summary = %q{Ruby Mail Handler}
   s.test_files = Dir.glob("test/**/*")
 
+  s.add_dependency "iconv", "~> 1.0"
+
   if s.respond_to? :specification_version then
     current_version = Gem::Specification::CURRENT_SPECIFICATION_VERSION
     s.specification_version = 2
