@@ -86,6 +86,7 @@ mails_s_new(klass, str, ident, cmt)
 {
     struct scanner *sc;
     const char *tmp;
+    VALUE kcode;
 
     sc = ALLOC_N(struct scanner, 1);
 
@@ -102,7 +103,8 @@ mails_s_new(klass, str, ident, cmt)
     else if (strcmp(tmp, "CENCODING")    == 0) sc->flags |= MODE_MIME;
     else if (strcmp(tmp, "CDISPOSITION") == 0) sc->flags |= MODE_MIME;
 
-    tmp = rb_get_kcode();
+    kcode = rb_gv_get("$KCODE");
+    tmp = NIL_P(kcode) ? "" : rb_string_value_cstr(&kcode);
     if (strcmp(tmp, "EUC") == 0 || strcmp(tmp, "SJIS") == 0) {
         sc->flags |= MODE_ISO2022;
     }
