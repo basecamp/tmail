@@ -56,6 +56,7 @@ HERE
     mail = TMail::Mail.parse(fixture)
     attachment = mail.attachments.last
     str = "Eelanalüüsi päring.jpg"
+    str.force_encoding("utf-8") if str.respond_to?(:force_encoding)
     assert_equal str, attachment.original_filename
   end
 

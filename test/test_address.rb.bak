@@ -165,7 +165,7 @@ class TestAddress < Test::Unit::TestCase
     end
   end
 
-  unless RUBY_VERSION.match(/1.9/)
+  unless RUBY_VERSION.match(/2./)
   def test_parse__mime
     # "\306\374\313\334\270\354"
     # "\223\372\226{\214\352"
