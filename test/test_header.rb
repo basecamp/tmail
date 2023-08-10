@@ -460,7 +460,7 @@ Received: by mebius with Microsoft Mail
 
   def test_to_s
     h = TMail::HeaderField.new('Received', HEADER1)
-    time = Time.parse('Tue, 4 Dec 2001 10:49:58 +0900').strftime("%a,%e %b %Y %H:%M:%S %z")
+    time = Time.parse('Tue, 4 Dec 2001 10:49:58 +0900').localtime.strftime("%a,%e %b %Y %H:%M:%S %z")
     assert_equal "from helium.ruby-lang.org by doraemon.edit.ne.jp via TCP with ESMTP id fB41nwEj007438 for <aamine@mx.edit.ne.jp>; #{time}", h.to_s
 
     [

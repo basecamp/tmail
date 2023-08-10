@@ -46,7 +46,7 @@ class TestMail < Test::Unit::TestCase
   end
 
   def test_to_s
-    time = Time.parse('Tue, 4 Dec 2001 10:49:58 +0900').strftime("%a,%e %b %Y %H:%M:%S %z")
+    time = Time.parse('Tue, 4 Dec 2001 10:49:58 +0900').localtime.strftime("%a,%e %b %Y %H:%M:%S %z")
     str =<<EOS
 Date: #{time}
 To: Minero Aoki <aamine@loveruby.net>
