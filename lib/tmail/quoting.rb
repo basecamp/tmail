@@ -104,7 +104,7 @@ module TMail
       end
 
       def convert_to_with_fallback_on_iso_8859_1(text, to, from)
-        return text if to == 'utf-8' and text.isutf8
+        return text if to == 'utf-8' and text.encoding == Encoding::UTF_8
 
         if from.blank? and !text.is_binary_data?
           from = CharDet.detect(text)['encoding']
