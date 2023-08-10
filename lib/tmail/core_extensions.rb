@@ -54,6 +54,10 @@ unless Object.respond_to?(:blank?)
     def blank?
       empty? || strip.empty?
     end
+
+    def is_binary_data?
+      ( self.count( "^ -~", "^\r\n" ).fdiv(self.size) > 0.3 || self.index( "\x00" ) ) unless empty?
+    end
   end
 
   class Numeric
